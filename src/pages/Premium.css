@@ -1,0 +1,145 @@
+
+.premium-page {
+  min-height: 100vh;
+  background: #121212;
+  color: white;
+  padding: 2rem;
+}
+
+.premium-page.modal-page {
+  min-height: auto;
+  background: #121212;
+  padding: 1rem;
+}
+
+.premium-header {
+  text-align: center;
+  margin-bottom: 3rem;
+}
+
+.premium-header h1 {
+  font-size: 3rem;
+  margin-bottom: 1rem;
+  font-weight: 700;
+  color: white;
+}
+
+.premium-header p {
+  font-size: 1.2rem;
+  color: #b3b3b3;
+}
+
+.premium-content {
+  max-width: 1200px;
+  margin: 0 auto;
+}
+
+.premium-plans {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+  gap: 2rem;
+  margin-top: 2rem;
+}
+
+.plan-card {
+  background: #282828;
+  border-radius: 20px;
+  padding: 2rem;
+  text-align: center;
+  border: 1px solid #404040;
+  transition: all 0.3s ease;
+  position: relative;
+}
+
+.plan-card:hover {
+  transform: translateY(-10px);
+  border-color: #535353;
+  box-shadow: 0 20px 40px rgba(0, 0, 0, 0.3);
+}
+
+.plan-card.featured {
+  border-color: #535353;
+  background: #2a2a2a;
+}
+
+.popular-badge {
+  background: #242424;
+  color: white;
+  padding: 0.5rem 1rem;
+  border-radius: 20px;
+  font-weight: 600;
+  position: absolute;
+  top: -10px;
+  left: 50%;
+  transform: translateX(-50%);
+  font-size: 0.9rem;
+  border: 1px solid #535353;
+}
+
+.plan-card h3 {
+  font-size: 1.8rem;
+  margin-bottom: 1rem;
+  font-weight: 600;
+  color: white;
+}
+
+.price {
+  font-size: 2.5rem;
+  font-weight: 700;
+  margin-bottom: 1.5rem;
+  color: white;
+}
+
+.plan-card ul {
+  list-style: none;
+  padding: 0;
+  margin-bottom: 2rem;
+}
+
+.plan-card li {
+  padding: 0.5rem 0;
+  font-size: 1rem;
+  color: #b3b3b3;
+}
+
+.premium-btn {
+  background: #242424;
+  border: 1px solid #535353;
+  color: white;
+  padding: 1rem 2rem;
+  border-radius: 25px;
+  font-weight: 700;
+  font-size: 1rem;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  width: 100%;
+}
+
+.premium-btn:hover {
+  background: #2a2a2a;
+  border-color: #727272;
+  transform: scale(1.05);
+}
+
+@media (max-width: 768px) {
+  .premium-page {
+    padding: 1rem;
+  }
+
+  .premium-header h1 {
+    font-size: 2rem;
+  }
+
+  .premium-plans {
+    grid-template-columns: 1fr;
+    gap: 1.5rem;
+  }
+
+  .plan-card {
+    padding: 1.5rem;
+  }
+
+  .price {
+    font-size: 2rem;
+  }
+}
