@@ -12,18 +12,18 @@ const GlobalMusicPlayer = () => {
     playTrack,
     pauseTrack,
     resumeTrack,
-    skipTrack,
-    previousTrack,
-    handleProgressClick,
-    formatTime
+    playNext,
+    playPrevious,
+    seekTo,
+    setVolume
   } = useMusicContext()
 
   if (!currentTrack) return null
 
   const handleSkipNext = () => {
     console.log('Skip next clicked')
-    if (skipTrack && typeof skipTrack === 'function') {
-      skipTrack()
+    if (playNext && typeof playNext === 'function') {
+      playNext()
     } else {
       console.log('Skip function not available')
     }
@@ -31,8 +31,8 @@ const GlobalMusicPlayer = () => {
 
   const handleSkipPrevious = () => {
     console.log('Skip previous clicked')
-    if (previousTrack && typeof previousTrack === 'function') {
-      previousTrack()
+    if (playPrevious && typeof playPrevious === 'function') {
+      playPrevious()
     } else {
       console.log('Previous function not available')
     }
@@ -48,6 +48,22 @@ const GlobalMusicPlayer = () => {
         resumeTrack()
       }
     }
+  }
+
+  const formatTime = (seconds) => {
+    if (!seconds || isNaN(seconds)) return '0:00'
+    const minutes = Math.floor(seconds / 60)
+    const secs = Math.floor(seconds % 60)
+    return `${minutes}:${secs.toString().padStart(2, '0')}`
+  }
+
+  const handleProgressClick = (e) => {
+    if (!duration) return
+    const progressBar = e.currentTarget
+    const rect = progressBar.getBoundingClientRect()
+    const clickX = e.clientX - rect.left
+    const newTime = (clickX / rect.width) * duration
+    seekTo(newTime)
   }
 
   return (
@@ -79,14 +95,14 @@ const GlobalMusicPlayer = () => {
       </div>
 
       <div className="player-progress">
-        <span className="time">{formatTime ? formatTime(currentTime) : '0:00'}</span>
+        <span className="time">{formatTime(currentTime)}</span>
         <div className="progress-bar" onClick={handleProgressClick}>
           <div 
             className="progress-fill" 
             style={{ width: `${duration ? (currentTime / duration) * 100 : 0}%` }}
           />
         </div>
-        <span className="time">{formatTime ? formatTime(duration) : '0:00'}</span>
+        <span className="time">{formatTime(duration)}</span>
       </div>
     </div>
   )
