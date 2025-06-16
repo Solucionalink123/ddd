@@ -14,140 +14,157 @@ export const useMusicContext = () => {
 export const MusicProvider = ({ children }) => {
   const [currentTrack, setCurrentTrack] = useState(null)
   const [isPlaying, setIsPlaying] = useState(false)
-  const [currentPlaylist, setCurrentPlaylist] = useState([])
-  const [currentIndex, setCurrentIndex] = useState(0)
   const [currentTime, setCurrentTime] = useState(0)
   const [duration, setDuration] = useState(0)
-  const [volume, setVolume] = useState(1)
+  const [playlist, setPlaylist] = useState([])
+  const [currentTrackIndex, setCurrentTrackIndex] = useState(0)
   const audioRef = useRef(null)
 
   useEffect(() => {
-    const audio = audioRef.current
-    if (!audio) return
-
-    const updateTime = () => setCurrentTime(audio.currentTime)
-    const updateDuration = () => setDuration(audio.duration)
-    const handleEnded = () => {
-      setIsPlaying(false)
-      playNext()
+    if (!audioRef.current) {
+      audioRef.current = new Audio()
+      audioRef.current.addEventListener('loadedmetadata', () => {
+        setDuration(audioRef.current.duration)
+      })
+      audioRef.current.addEventListener('timeupdate', () => {
+        setCurrentTime(audioRef.current.currentTime)
+      })
+      audioRef.current.addEventListener('ended', () => {
+        setIsPlaying(false)
+      })
     }
-
-    audio.addEventListener('timeupdate', updateTime)
-    audio.addEventListener('loadedmetadata', updateDuration)
-    audio.addEventListener('ended', handleEnded)
 
     return () => {
-      audio.removeEventListener('timeupdate', updateTime)
-      audio.removeEventListener('loadedmetadata', updateDuration)
-      audio.removeEventListener('ended', handleEnded)
+      if (audioRef.current) {
+        audioRef.current.pause()
+        audioRef.current.src = ''
+      }
     }
-  }, [currentTrack])
+  }, [])
 
-  const playTrack = async (track, playlist = []) => {
-    try {
-      if (!track || !track.preview) {
-        console.error('Track or preview URL is missing')
-        return
-      }
-
-      if (currentTrack?.id === track.id && isPlaying) {
-        pauseTrack()
-        return
-      }
-
+  const playTrack = (track, newPlaylist = null) => {
+    if (currentTrack?.id === track.id && isPlaying) {
+      pauseTrack()
+    } else {
       setCurrentTrack(track)
-      setCurrentPlaylist(playlist)
       
-      const trackIndex = playlist.findIndex(t => t.id === track.id)
-      setCurrentIndex(trackIndex >= 0 ? trackIndex : 0)
-
+      // Se uma nova playlist foi fornecida, atualiza a playlist
+      if (newPlaylist && Array.isArray(newPlaylist)) {
+        setPlaylist(newPlaylist)
+        const trackIndex = newPlaylist.findIndex(t => t.id === track.id)
+        setCurrentTrackIndex(trackIndex >= 0 ? trackIndex : 0)
+      }
+      
       if (audioRef.current) {
         audioRef.current.src = track.preview
-        audioRef.current.load()
-        
-        try {
-          await audioRef.current.play()
-          setIsPlaying(true)
-        } catch (error) {
-          console.error('Error playing track:', error)
-          setIsPlaying(false)
-        }
+        audioRef.current.play()
+          .then(() => setIsPlaying(true))
+          .catch(error => console.error('Error playing track:', error))
       }
-    } catch (error) {
-      console.error('Error in playTrack:', error)
     }
   }
 
   const pauseTrack = () => {
-    if (audioRef.current && !audioRef.current.paused) {
+    if (audioRef.current) {
       audioRef.current.pause()
       setIsPlaying(false)
     }
   }
 
-  const resumeTrack = async () => {
-    if (audioRef.current && audioRef.current.paused) {
-      try {
-        await audioRef.current.play()
-        setIsPlaying(true)
-      } catch (error) {
-        console.error('Error resuming track:', error)
+  const resumeTrack = () => {
+    if (audioRef.current && currentTrack) {
+      audioRef.current.play()
+        .then(() => setIsPlaying(true))
+        .catch(error => console.error('Error resuming track:', error))
+    }
+  }
+
+  const skipTrack = () => {
+    console.log('Skip to next track')
+    if (playlist.length > 0 && currentTrackIndex < playlist.length - 1) {
+      const nextTrack = playlist[currentTrackIndex + 1]
+      setCurrentTrackIndex(currentTrackIndex + 1)
+      setCurrentTrack(nextTrack)
+      
+      if (audioRef.current) {
+        audioRef.current.src = nextTrack.preview
+        audioRef.current.play()
+          .then(() => setIsPlaying(true))
+          .catch(error => console.error('Error playing next track:', error))
+      }
+      console.log('Skipped to next track:', nextTrack.title)
+    } else {
+      console.log('No next track available')
+      // Se não há próxima música, para a atual
+      if (audioRef.current) {
+        audioRef.current.pause()
+        setIsPlaying(false)
       }
     }
   }
 
-  const playNext = () => {
-    if (currentPlaylist.length > 0 && currentIndex < currentPlaylist.length - 1) {
-      const nextTrack = currentPlaylist[currentIndex + 1]
-      playTrack(nextTrack, currentPlaylist)
+  const previousTrack = () => {
+    console.log('Go to previous track')
+    
+    // Se a música tocou por mais de 3 segundos, volta ao início
+    if (audioRef.current && audioRef.current.currentTime > 3) {
+      audioRef.current.currentTime = 0
+      setCurrentTime(0)
+      console.log('Restarted current track')
+    } else if (playlist.length > 0 && currentTrackIndex > 0) {
+      // Vai para a música anterior
+      const prevTrack = playlist[currentTrackIndex - 1]
+      setCurrentTrackIndex(currentTrackIndex - 1)
+      setCurrentTrack(prevTrack)
+      
+      if (audioRef.current) {
+        audioRef.current.src = prevTrack.preview
+        audioRef.current.play()
+          .then(() => setIsPlaying(true))
+          .catch(error => console.error('Error playing previous track:', error))
+      }
+      console.log('Went to previous track:', prevTrack.title)
+    } else {
+      console.log('No previous track available')
     }
   }
 
-  const playPrevious = () => {
-    if (currentPlaylist.length > 0 && currentIndex > 0) {
-      const prevTrack = currentPlaylist[currentIndex - 1]
-      playTrack(prevTrack, currentPlaylist)
+  const handleProgressClick = (e) => {
+    if (audioRef.current && duration) {
+      const rect = e.currentTarget.getBoundingClientRect()
+      const percent = (e.clientX - rect.left) / rect.width
+      const newTime = percent * duration
+      audioRef.current.currentTime = newTime
+      setCurrentTime(newTime)
     }
   }
 
-  const seekTo = (time) => {
-    if (audioRef.current) {
-      audioRef.current.currentTime = time
-      setCurrentTime(time)
-    }
-  }
-
-  const setAudioVolume = (newVolume) => {
-    if (audioRef.current) {
-      audioRef.current.volume = newVolume
-      setVolume(newVolume)
-    }
+  const formatTime = (time) => {
+    if (!time || isNaN(time)) return '0:00'
+    const minutes = Math.floor(time / 60)
+    const seconds = Math.floor(time % 60)
+    return `${minutes}:${seconds.toString().padStart(2, '0')}`
   }
 
   const value = {
     currentTrack,
     isPlaying,
-    currentPlaylist,
-    currentIndex,
     currentTime,
     duration,
-    volume,
-    audioRef,
+    playlist,
+    currentTrackIndex,
     playTrack,
     pauseTrack,
     resumeTrack,
-    playNext,
-    playPrevious,
-    seekTo,
-    setVolume: setAudioVolume
+    skipTrack,
+    previousTrack,
+    handleProgressClick,
+    formatTime
   }
 
   return (
     <MusicContext.Provider value={value}>
       {children}
-      <audio ref={audioRef} />
     </MusicContext.Provider>
   )
 }
-
-export default MusicContext
